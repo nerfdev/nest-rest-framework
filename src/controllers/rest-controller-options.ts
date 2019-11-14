@@ -9,6 +9,7 @@ export interface RestControllerOptions<
   ResponseDataT
 > {
   viewset: ViewSet<PrimaryKeyT, DataT>;
+  primaryKeyTransformer?: Transformer<string, PrimaryKeyT>;
   requestTransformer?: Transformer<RequestDataT, DataT>;
   dataTransformer?: Transformer<DataT, ResponseDataT>;
   saveHooks?: Hook<DataT>[];

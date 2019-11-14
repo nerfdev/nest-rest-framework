@@ -13,14 +13,6 @@ export abstract class RestController<
     return this.options.viewset;
   }
 
-  get requestTransformer() {
-    return this.options.requestTransformer;
-  }
-
-  get dataTransformer() {
-    return this.options.dataTransformer;
-  }
-
   constructor(
     protected readonly options: RestControllerOptions<
       PrimaryKeyT,
@@ -40,10 +32,12 @@ export abstract class RestController<
   }
 
   @Get(':id')
-  async getOne(@Param('id') id: PrimaryKeyT, @Req() request) {
+  async getOne(@Param('id') id: string, @Req() request) {
     await this.runAuthHooks(request);
 
-    const data = await this.viewset.retrieve(id);
+    const transformedId = await this.transformPrimaryKey(id);
+
+    const data = await this.viewset.retrieve(transformedId);
 
     return await this.transformData(data, RestAction.GetOne);
   }
@@ -62,12 +56,14 @@ export abstract class RestController<
   }
 
   @Put(':id')
-  async put(@Param('id') id: PrimaryKeyT, @Body() update: RequestDataT, @Req() request) {
+  async put(@Param('id') id: string, @Body() update: RequestDataT, @Req() request) {
     await this.runAuthHooks(request);
 
     const dataToSave = await this.transformRequest(update, RestAction.Put, request);
 
-    const data = await this.viewset.replace(id, dataToSave);
+    const transformedId = await this.transformPrimaryKey(id);
+
+    const data = await this.viewset.replace(transformedId, dataToSave);
 
     await this.runSaveHooks(dataToSave);
     
@@ -75,12 +71,14 @@ export abstract class RestController<
   }
 
   @Patch(':id')
-  async patch(@Param('id') id: PrimaryKeyT, @Body() update: RequestDataT, @Req() request) {
+  async patch(@Param('id') id: string, @Body() update: RequestDataT, @Req() request) {
     await this.runAuthHooks(request);
 
     const dataToSave = await this.transformRequest(update, RestAction.Patch, request);
 
-    const data = await this.viewset.modify(id, dataToSave);
+    const transformedId = await this.transformPrimaryKey(id);
+
+    const data = await this.viewset.modify(transformedId, dataToSave);
 
     await this.runSaveHooks(dataToSave);
 
@@ -88,27 +86,38 @@ export abstract class RestController<
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: PrimaryKeyT, @Req() request) {
+  async delete(@Param('id') id: string, @Req() request) {
     await this.runAuthHooks(request);
-    await Promise.resolve(this.viewset.destroy(id));
+
+    const transformedId = await this.transformPrimaryKey(id);
+
+    await Promise.resolve(this.viewset.destroy(transformedId));
   }
 
   private async transformRequest(input: RequestDataT, action?: RestAction, request?: any) {
-    if (!this.requestTransformer) {
+    if (!this.options.requestTransformer) {
       // if there is no request transformer, assume the data type is the same as the request type.
-      return input as any as DataT;
+      return Promise.resolve(input as any as DataT);
     }
 
-    return await Promise.resolve(this.requestTransformer.transform(input, action, request));
+    return await Promise.resolve(this.options.requestTransformer.transform(input, action, request));
+  }
+
+  private async transformPrimaryKey(idParam: string): Promise<PrimaryKeyT> {
+    if (!this.options.primaryKeyTransformer) {
+      return Promise.resolve(idParam as any);
+    }
+
+    return await Promise.resolve(this.options.primaryKeyTransformer.transform(idParam));
   }
 
   private async transformData(input: DataT, action?: RestAction, request?: any) {
-    if (!this.dataTransformer) {
+    if (!this.options.dataTransformer) {
       // if there is no data transformer, assume the data type is the same as the request type.
-      return input as any as ResponseDataT;
+      return Promise.resolve(input as any as ResponseDataT);
     }
 
-    return await Promise.resolve(this.dataTransformer.transform(input, action, request));
+    return await Promise.resolve(this.options.dataTransformer.transform(input, action, request));
   }
 
   private async runAuthHooks(request) {
