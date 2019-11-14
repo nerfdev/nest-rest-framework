@@ -1,6 +1,5 @@
-import { RestControllerOptions } from './rest-controller-options';
+import { RestBatchControllerOptions} from './rest-batch-controller-options';
 import { Get, Post, Body, Put, Patch, Delete, Query, Req } from '@nestjs/common';
-import { BatchUpdate } from '../viewsets/base.viewsets';
 import { RestAction } from './rest-action.enum';
 
 export abstract class RestBatchController<
@@ -22,7 +21,7 @@ export abstract class RestBatchController<
   }
 
   constructor(
-    protected readonly options: RestControllerOptions<
+    protected readonly options: RestBatchControllerOptions<
       PrimaryKeyT,
       DataT,
       RequestDataT,
