@@ -11,7 +11,7 @@ export interface RestControllerOptions<
   viewset: ViewSet<PrimaryKeyT, DataT>;
   requestTransformer?: Transformer<RequestDataT, DataT>;
   dataTransformer?: Transformer<DataT, ResponseDataT>;
-  saveHooks: Hook<DataT>[];
-  batchSaveHooks: Hook<DataT[]>[];
-  authHooks: Hook<any>[];
+  saveHooks?: Hook<DataT>[];
+  batchSaveHooks?: Hook<DataT[]>[];
+  authHooks?: Hook<any>[];
 }
