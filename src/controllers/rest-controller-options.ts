@@ -1,5 +1,6 @@
 import { ViewSet } from '../viewsets/base.viewsets';
 import { Transformer } from '../transformers/base.transformer';
+import { Hook } from '../hooks';
 
 export interface RestControllerOptions<
   PrimaryKeyT,
@@ -10,5 +11,7 @@ export interface RestControllerOptions<
   viewset: ViewSet<PrimaryKeyT, DataT>;
   requestTransformer?: Transformer<RequestDataT, DataT>;
   dataTransformer?: Transformer<DataT, ResponseDataT>;
-  enableBatch?: boolean;
+  saveHooks: Hook<DataT>[];
+  batchSaveHooks: Hook<DataT[]>[];
+  authHooks: Hook<any>[];
 }

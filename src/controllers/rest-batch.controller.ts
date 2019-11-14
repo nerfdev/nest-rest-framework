@@ -32,6 +32,7 @@ export abstract class RestBatchController<
 
   @Get('')
   async batchGet(@Query('ids') ids: string, @Req() request) {
+    await this.runAuthHooks(request);
     const pks = ids.split(',') as any as PrimaryKeyT[];
     const data = await this.viewset.batchRetrieve(pks);
     const dataToReturn = await Promise.all(data.map(d => {
@@ -42,10 +43,12 @@ export abstract class RestBatchController<
 
   @Post('')
   async batchPost(@Body() creates: RequestDataT[], @Req() request) {
+    await this.runAuthHooks(request);
     const dataToSave = await Promise.all(creates.map(r => {
         return Promise.resolve(this.requestTransformer.transform(r, RestAction.BatchPost, request));
     }));
     const data = await this.viewset.batchCreate(dataToSave);
+    await this.runSaveHooks(dataToSave);
     const dataToReturn = await Promise.all(data.map(d => {
         return Promise.resolve(this.dataTransformer.transform(d, RestAction.BatchPost));
     }));
@@ -54,6 +57,7 @@ export abstract class RestBatchController<
 
   @Put('')
   async batchPut(@Body() updates: BatchUpdate<PrimaryKeyT, RequestDataT>, @Req() request) {
+    await this.runAuthHooks(request);
     const dataToSave: BatchUpdate<PrimaryKeyT, DataT> = await Promise.all(updates.map(async r => {
         return {
             pk: r.pk,
@@ -61,6 +65,7 @@ export abstract class RestBatchController<
         };
     }));
     const data = await this.viewset.batchReplace(dataToSave);
+    await this.runSaveHooks(dataToSave.map(x => x.data));
     const dataToReturn = await Promise.all(data.map(d => {
         return Promise.resolve(this.dataTransformer.transform(d, RestAction.BatchPut));
     }));
@@ -69,6 +74,7 @@ export abstract class RestBatchController<
 
   @Patch('')
   async batchPatch(@Body() updates: BatchUpdate<PrimaryKeyT, RequestDataT>, @Req() request) {
+    await this.runAuthHooks(request);
     const dataToSave: BatchUpdate<PrimaryKeyT, DataT> = await Promise.all(updates.map(async r => {
         return {
             pk: r.pk,
@@ -76,6 +82,7 @@ export abstract class RestBatchController<
         };
     }));
     const data = await this.viewset.batchModify(dataToSave);
+    await this.runSaveHooks(dataToSave.map(x => x.data));
     const dataToReturn = await Promise.all(data.map(d => {
         return Promise.resolve(this.dataTransformer.transform(d, RestAction.BatchPatch));
     }));
@@ -84,7 +91,18 @@ export abstract class RestBatchController<
 
   @Delete('')
   async batchDelete(@Query('ids') ids: string, @Req() request) {
+    await this.runAuthHooks(request);
     const pks = ids.split(',') as any as PrimaryKeyT[];
     await this.viewset.batchDestroy(pks);
+  }
+
+  private async runAuthHooks(request) {
+    const hookPromises = (this.options.authHooks || []).map(hook => Promise.resolve(hook.execute(request)));
+    await Promise.all(hookPromises);
+  }
+
+  private async runSaveHooks(data: DataT[]) {
+    const hookPromises = (this.options.batchSaveHooks || []).map(hook => Promise.resolve(hook.execute(data)));
+    await Promise.all(hookPromises);
   }
 }

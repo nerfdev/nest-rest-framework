@@ -32,6 +32,7 @@ export abstract class RestController<
 
   @Get('')
   async get(@Query() query: ViewSetQuery, @Req() request) {
+    await this.runAuthHooks(request);
     const data = await this.viewset.list(query);
     const dataToReturn = await Promise.all(data.map(d => {
         return Promise.resolve(this.dataTransformer.transform(d, RestAction.BatchGet));
@@ -41,6 +42,7 @@ export abstract class RestController<
 
   @Get(':id')
   async getOne(@Param('id') id: PrimaryKeyT, @Req() request) {
+    await this.runAuthHooks(request);
     const data = await this.viewset.retrieve(id);
     const dataToReturn = await Promise.resolve(this.dataTransformer.transform(data, RestAction.GetOne));
     return dataToReturn;
@@ -48,30 +50,47 @@ export abstract class RestController<
 
   @Post()
   async post(@Body() update: RequestDataT, @Req() request) {
+    await this.runAuthHooks(request);
     const dataToSave = await Promise.resolve(this.requestTransformer.transform(update, RestAction.Post, request));
     const data = await this.viewset.create(dataToSave);
+    await this.runSaveHooks(dataToSave);
     const dataToReturn = await Promise.resolve(this.dataTransformer.transform(data, RestAction.Post));
     return dataToReturn;
   }
 
   @Put(':id')
   async put(@Param('id') id: PrimaryKeyT, @Body() update: RequestDataT, @Req() request) {
+    await this.runAuthHooks(request);
     const dataToSave = await Promise.resolve(this.requestTransformer.transform(update, RestAction.Put, request));
     const data = await this.viewset.replace(id, dataToSave);
+    await this.runSaveHooks(dataToSave);
     const dataToReturn = await Promise.resolve(this.dataTransformer.transform(data, RestAction.Put));
     return dataToReturn;
   }
 
   @Patch(':id')
   async patch(@Param('id') id: PrimaryKeyT, @Body() update: RequestDataT, @Req() request) {
+    await this.runAuthHooks(request);
     const dataToSave = await Promise.resolve(this.requestTransformer.transform(update, RestAction.Patch, request));
     const data = await this.viewset.modify(id, dataToSave);
+    await this.runSaveHooks(dataToSave);
     const dataToReturn = await Promise.resolve(this.dataTransformer.transform(data, RestAction.Patch));
     return dataToReturn;
   }
 
   @Delete(':id')
   async delete(@Param('id') id: PrimaryKeyT, @Req() request) {
+    await this.runAuthHooks(request);
     await Promise.resolve(this.viewset.destroy(id));
+  }
+
+  private async runAuthHooks(request) {
+    const hookPromises = (this.options.authHooks || []).map(hook => Promise.resolve(hook.execute(request)));
+    await Promise.all(hookPromises);
+  }
+
+  private async runSaveHooks(data: DataT) {
+    const hookPromises = (this.options.saveHooks || []).map(hook => Promise.resolve(hook.execute(data)));
+    await Promise.all(hookPromises);
   }
 }
