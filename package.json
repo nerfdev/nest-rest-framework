@@ -1,6 +1,6 @@
 {
   "name": "nest-rest-framework",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "",
   "author": "",
   "license": "MIT",
@@ -58,5 +58,8 @@
     },
     "coverageDirectory": "./coverage",
     "testEnvironment": "node"
-  }
+  },
+  "files": [
+    "src"
+  ]
 }
