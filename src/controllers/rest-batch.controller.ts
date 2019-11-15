@@ -23,14 +23,6 @@ export abstract class RestBatchController<
     return this.options.viewset;
   }
 
-  get requestTransformer() {
-    return this.options.requestTransformer;
-  }
-
-  get dataTransformer() {
-    return this.options.dataTransformer;
-  }
-
   constructor(
     protected readonly options: RestBatchControllerOptions<
       PrimaryKeyT,

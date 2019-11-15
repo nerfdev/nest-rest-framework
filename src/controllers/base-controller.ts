@@ -18,6 +18,7 @@ export abstract class BaseController<
           ResponseDataT
         >,
   ) {}
+
   protected async transformRequest(
     input: RequestDataT,
     action?: RestAction,
