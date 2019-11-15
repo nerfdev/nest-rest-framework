@@ -1,8 +1,8 @@
-import { ViewSet } from '../viewsets';
+import { ViewSetBatch } from '../viewsets';
 import { BaseControllerOptions } from './base-controller-options';
-import { Hook } from '../hooks';
+import { BatchHook } from '../hooks';
 
-export interface RestControllerOptions<
+export interface RestBatchControllerOptions<
   PrimaryKeyT,
   DataT,
   RequestDataT,
@@ -14,6 +14,6 @@ export interface RestControllerOptions<
     RequestDataT,
     ResponseDataT
   > {
-  viewset: ViewSet<PrimaryKeyT, DataT>;
-  saveHooks?: Array<Hook<DataT>>;
+  viewset: ViewSetBatch<PrimaryKeyT, DataT>;
+  batchSaveHooks?: Array<BatchHook<DataT>>;
 }
