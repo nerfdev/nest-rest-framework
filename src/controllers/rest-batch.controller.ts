@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { RestAction } from './rest-action.enum';
 import { BatchUpdate } from '../viewsets';
-import { BaseController } from './base.controller';
+import { BaseController } from './base-controller';
 
 export abstract class RestBatchController<
   PrimaryKeyT,

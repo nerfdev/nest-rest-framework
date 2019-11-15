@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ViewSetQuery } from '../viewsets/viewset-query';
 import { RestAction } from './rest-action.enum';
-import { BaseController } from './base.controller';
+import { BaseController } from './base-controller';
 
 export abstract class RestController<
   PrimaryKeyT,
