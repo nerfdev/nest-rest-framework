@@ -59,7 +59,9 @@
     "@types/jest": "^24.0.18",
     "@types/node": "^12.7.5",
     "@types/supertest": "^2.0.8",
+    "husky": "^3.1.0",
     "jest": "^24.9.0",
+    "lint-staged": "^9.4.3",
     "prettier": "^1.18.2",
     "semantic-release": "^15.13.31",
     "supertest": "^4.0.2",
@@ -101,9 +103,12 @@
         }
       ],
       "@semantic-release/release-notes-generator",
-      ["@semantic-release/changelog", {
-        "changelogFile": "CHANGELOG.md"
-      }],
+      [
+        "@semantic-release/changelog",
+        {
+          "changelogFile": "CHANGELOG.md"
+        }
+      ],
       [
         "@semantic-release/npm",
         {
