@@ -4,9 +4,9 @@
   "description": "",
   "author": "",
   "license": "MIT",
-  "homepage": "https://github.com/benMain/nest-rest-framework",
+  "homepage": "https://github.com/kerryritter/nest-rest-framework",
   "bugs": {
-    "url": "https://github.com/benMain/nest-rest-framework"
+    "url": "https://github.com/kerryritter/nest-rest-framework"
   },
   "keywords": [
     "nest",
@@ -19,7 +19,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/benMain/nest-rest-framework.git"
+    "url": "https://github.com/kerryritter/nest-rest-framework.git"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
