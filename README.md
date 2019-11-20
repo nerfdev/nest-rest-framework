@@ -124,6 +124,11 @@ export class TodoController extends RestController<
 
 Nest REST Framework is an MIT-licensed open source project. 
 
+## Committing
+
+Committing to this project requires Commit messages to be formatted according to the Angular
+[conventional-changelog](https://github.com/conventional-changelog/conventional-changelog/tree/master/packages/conventional-changelog-angular)
+
 ## Stay in touch
 
 - Author - [Kerry Ritter](https://kerryritter.com)
