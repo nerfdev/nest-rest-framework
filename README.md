@@ -132,6 +132,7 @@ Committing to this project requires Commit messages to be formatted according to
 ## Stay in touch
 
 - Author - [Kerry Ritter](https://kerryritter.com)
+- Author - [Benjamin Main](mailto::bam036036@gmail.com)
 - Nest Website - [https://nestjs.com](https://nestjs.com/)
 - Twitter - [@kerryritter](https://twitter.com/kerryritter)
 
