@@ -44,24 +44,43 @@ export abstract class BaseController<
     );
   }
 
-  protected async transformData(
+  protected async transformBusinessLogicSave(input: DataT): Promise<DataT> {
+    if (!this.options.businessLogicSaveTransformers) {
+      return input;
+    }
+    let workingObject = input;
+    for (const businessLogicTransformer of this.options
+      .businessLogicSaveTransformers) {
+      workingObject = await businessLogicTransformer.transform(workingObject);
+    }
+    return workingObject;
+  }
+
+  protected async transformResponse(
     input: DataT,
     action?: RestAction,
     request?: any,
   ) {
-    if (!this.options.dataTransformer) {
+    if (!this.options.responseTransformer) {
       // if there is no data transformer, assume the data type is the same as the request type.
       return Promise.resolve((input as any) as ResponseDataT);
     }
 
     return await Promise.resolve(
-      this.options.dataTransformer.transform(input, action, request),
+      this.options.responseTransformer.transform(input, action, request),
     );
   }
 
   protected async runAuthHooks(request) {
     const hookPromises = (this.options.authHooks || []).map(hook =>
       Promise.resolve(hook.execute(request)),
+    );
+    await Promise.all(hookPromises);
+  }
+
+  protected async runSaveHooks(data: DataT) {
+    const hookPromises = (this.options.saveHooks || []).map(hook =>
+      Promise.resolve(hook.execute(data)),
     );
     await Promise.all(hookPromises);
   }
