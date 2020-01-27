@@ -42,7 +42,7 @@ export abstract class RestController<
     const data = await this.viewset.query(query);
 
     return await Promise.all(
-      data.map(d => this.transformData(d, RestAction.Get)),
+      data.map(d => this.transformResponse(d, RestAction.Get)),
     );
   }
 
@@ -54,24 +54,27 @@ export abstract class RestController<
 
     const data = await this.viewset.retrieve(transformedId);
 
-    return await this.transformData(data, RestAction.GetOne);
+    return await this.transformResponse(data, RestAction.GetOne);
   }
 
   @Post()
   async post(@Body() update: RequestDataT, @Req() request) {
     await this.runAuthHooks(request);
 
-    const dataToSave = await this.transformRequest(
+    const dataPreBusinessLogic = await this.transformRequest(
       update,
       RestAction.Post,
       request,
+    );
+    const dataToSave = await this.transformBusinessLogicSave(
+      dataPreBusinessLogic,
     );
 
     const data = await this.viewset.create(dataToSave);
 
     await this.runSaveHooks(dataToSave);
 
-    return await this.transformData(data, RestAction.Post);
+    return await this.transformResponse(data, RestAction.Post);
   }
 
   @Put(':id')
@@ -82,7 +85,7 @@ export abstract class RestController<
   ) {
     await this.runAuthHooks(request);
 
-    const dataToSave = await this.transformRequest(
+    const dataPreBusinessLogic = await this.transformRequest(
       update,
       RestAction.Put,
       request,
@@ -90,11 +93,15 @@ export abstract class RestController<
 
     const transformedId = await this.transformPrimaryKey(id);
 
+    const dataToSave = await this.transformBusinessLogicSave(
+      dataPreBusinessLogic,
+    );
+
     const data = await this.viewset.replace(transformedId, dataToSave);
 
     await this.runSaveHooks(dataToSave);
 
-    return await this.transformData(data, RestAction.Put);
+    return await this.transformResponse(data, RestAction.Put);
   }
 
   @Patch(':id')
@@ -105,7 +112,7 @@ export abstract class RestController<
   ) {
     await this.runAuthHooks(request);
 
-    const dataToSave = await this.transformRequest(
+    const dataPreBusinessLogic = await this.transformRequest(
       update,
       RestAction.Patch,
       request,
@@ -113,11 +120,15 @@ export abstract class RestController<
 
     const transformedId = await this.transformPrimaryKey(id);
 
+    const dataToSave = await this.transformBusinessLogicSave(
+      dataPreBusinessLogic,
+    );
+
     const data = await this.viewset.modify(transformedId, dataToSave);
 
     await this.runSaveHooks(dataToSave);
 
-    return await this.transformData(data, RestAction.Patch);
+    return await this.transformResponse(data, RestAction.Patch);
   }
 
   @Delete(':id')
@@ -127,12 +138,5 @@ export abstract class RestController<
     const transformedId = await this.transformPrimaryKey(id);
 
     await Promise.resolve(this.viewset.destroy(transformedId));
-  }
-
-  private async runSaveHooks(data: DataT) {
-    const hookPromises = (this.options.saveHooks || []).map(hook =>
-      Promise.resolve(hook.execute(data)),
-    );
-    await Promise.all(hookPromises);
   }
 }

@@ -7,8 +7,10 @@ export interface BaseControllerOptions<
   RequestDataT,
   ResponseDataT
 > {
-  requestTransformer?: Transformer<RequestDataT, DataT>;
-  dataTransformer?: Transformer<DataT, ResponseDataT>;
   authHooks?: Array<Hook<any>>;
+  requestTransformer?: Transformer<RequestDataT, DataT>;
+  businessLogicSaveTransformers?: Array<Transformer<DataT, DataT>>;
   primaryKeyTransformer?: Transformer<string, PrimaryKeyT>;
+  saveHooks?: Array<Hook<any>>;
+  responseTransformer?: Transformer<DataT, ResponseDataT>;
 }
