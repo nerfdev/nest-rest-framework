@@ -12,6 +12,7 @@ import {
 import { RestAction } from './rest-action.enum';
 import { BatchUpdate } from '../viewsets';
 import { BaseController } from './base-controller';
+import { flatMap } from 'lodash';
 
 export abstract class RestBatchController<
   PrimaryKeyT,
@@ -44,7 +45,7 @@ export abstract class RestBatchController<
     const data = await this.viewset.batchRetrieve(pksTransformed);
     const dataToReturn = await Promise.all(
       data.map(d => {
-        return Promise.resolve(this.transformData(d, RestAction.BatchGet));
+        return Promise.resolve(this.transformResponse(d, RestAction.BatchGet));
       }),
     );
     return dataToReturn;
@@ -53,18 +54,21 @@ export abstract class RestBatchController<
   @Post('')
   async batchPost(@Body() creates: RequestDataT[], @Req() request) {
     await this.runAuthHooks(request);
-    const dataToSave = await Promise.all(
+    const dataPreBusinessLogic = await Promise.all(
       creates.map(r => {
         return Promise.resolve(
           this.transformRequest(r, RestAction.BatchPost, request),
         );
       }),
     );
+    const dataToSave = await Promise.all(
+      dataPreBusinessLogic.map(obj => this.transformBusinessLogicSave(obj)),
+    );
     const data = await this.viewset.batchCreate(dataToSave);
-    await this.runSaveHooks(dataToSave);
+    await this.runAllSaveHooks(dataToSave);
     const dataToReturn = await Promise.all(
       data.map(d => {
-        return Promise.resolve(this.transformData(d, RestAction.BatchPost));
+        return Promise.resolve(this.transformResponse(d, RestAction.BatchPost));
       }),
     );
     return dataToReturn;
@@ -76,7 +80,10 @@ export abstract class RestBatchController<
     @Req() request,
   ) {
     await this.runAuthHooks(request);
-    const dataToSave: BatchUpdate<PrimaryKeyT, DataT> = await Promise.all(
+    const dataPreBusinessLogic: BatchUpdate<
+      PrimaryKeyT,
+      DataT
+    > = await Promise.all(
       updates.map(async r => {
         return {
           pk: r.pk,
@@ -86,11 +93,17 @@ export abstract class RestBatchController<
         };
       }),
     );
+    const dataToSave = await Promise.all(
+      dataPreBusinessLogic.map(async obj => ({
+        pk: obj.pk,
+        data: await this.transformBusinessLogicSave(obj.data),
+      })),
+    );
     const data = await this.viewset.batchReplace(dataToSave);
-    await this.runSaveHooks(dataToSave.map(x => x.data));
+    await this.runAllSaveHooks(dataToSave.map(x => x.data));
     const dataToReturn = await Promise.all(
       data.map(d => {
-        return Promise.resolve(this.transformData(d, RestAction.BatchPut));
+        return Promise.resolve(this.transformResponse(d, RestAction.BatchPut));
       }),
     );
     return dataToReturn;
@@ -102,7 +115,10 @@ export abstract class RestBatchController<
     @Req() request,
   ) {
     await this.runAuthHooks(request);
-    const dataToSave: BatchUpdate<PrimaryKeyT, DataT> = await Promise.all(
+    const dataPreBusinessLogic: BatchUpdate<
+      PrimaryKeyT,
+      DataT
+    > = await Promise.all(
       updates.map(async r => {
         return {
           pk: r.pk,
@@ -112,11 +128,19 @@ export abstract class RestBatchController<
         };
       }),
     );
+    const dataToSave = await Promise.all(
+      dataPreBusinessLogic.map(async obj => ({
+        pk: obj.pk,
+        data: await this.transformBusinessLogicSave(obj.data),
+      })),
+    );
     const data = await this.viewset.batchModify(dataToSave);
-    await this.runSaveHooks(dataToSave.map(x => x.data));
+    await this.runAllSaveHooks(dataToSave.map(x => x.data));
     const dataToReturn = await Promise.all(
       data.map(d => {
-        return Promise.resolve(this.transformData(d, RestAction.BatchPatch));
+        return Promise.resolve(
+          this.transformResponse(d, RestAction.BatchPatch),
+        );
       }),
     );
     return dataToReturn;
@@ -132,10 +156,16 @@ export abstract class RestBatchController<
     await this.viewset.batchDestroy(pksTransformed);
   }
 
-  private async runSaveHooks(data: DataT[]) {
-    const hookPromises = (this.options.batchSaveHooks || []).map(hook =>
+  async runAllSaveHooks(data: DataT[]) {
+    const batchHookPromises = (this.options.batchSaveHooks || []).map(hook =>
       Promise.resolve(hook.execute(data)),
     );
-    await Promise.all(hookPromises);
+    const individualPromises = flatMap(
+      (this.options.saveHooks || []).map(hook =>
+        data.map(obj => Promise.resolve(hook.execute(obj))),
+      ),
+    );
+    const allPromises = [...batchHookPromises, ...individualPromises];
+    await Promise.all(allPromises);
   }
 }
